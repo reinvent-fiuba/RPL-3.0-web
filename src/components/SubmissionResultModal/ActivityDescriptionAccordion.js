@@ -27,6 +27,12 @@ const styles = theme => ({
       backgroundColor: theme.palette.action.hover,
       color: theme.palette.text.primary,
     },
+    "& .markdown-body table tr": {
+      backgroundColor: theme.palette.background.default,
+    },
+    "& .markdown-body table tr:nth-child(2n)": {
+      backgroundColor: theme.palette.action.hover,
+    }
   },
 });
 
