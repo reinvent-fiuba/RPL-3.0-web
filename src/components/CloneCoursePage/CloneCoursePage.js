@@ -12,10 +12,14 @@ import coursesService from "../../services/coursesService";
 
 const styles = theme => ({
   coursePicker: {
-    marginTop: theme.spacing(1),
-    marginLeft: theme.spacing(40),
-    marginRight: theme.spacing(40),
-    padding: `0px ${theme.spacing(4)}px`,
+    maxWidth: "60%",
+    margin: "auto",
+    marginTop: theme.spacing(4),
+    paddingLeft: theme.spacing(4),
+    [theme.breakpoints.down("md")]: {
+      maxWidth: "100%",
+      marginTop: theme.spacing(2),
+    },
   },
 });
 

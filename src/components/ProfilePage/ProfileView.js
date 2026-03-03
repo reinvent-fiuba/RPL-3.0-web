@@ -69,7 +69,7 @@ class ProfileView extends React.Component {
               <Typography className={classes.info} variant="h6">{`Usuario:  ${profile.username}`}</Typography>
               <Typography className={classes.info} variant="body1">{`Nombre:  ${profile.name}`}</Typography>
               <Typography className={classes.info} variant="body1">{`Apellido:  ${profile.surname}`}</Typography>
-              <Typography className={classes.info} variant="body1">{`Id de Universidad:  ${profile.student_id}`}</Typography>
+              <Typography className={classes.info} variant="body1">{`Padrón:  ${profile.student_id}`}</Typography>
               <Typography className={classes.info} variant="body1">{`Email:  ${profile.email}`}</Typography>
               <Typography className={classes.info} variant="body1">{`Universidad:  ${profile.university}`}</Typography>
               <Typography className={classes.info} variant="body1">{`Carrera:  ${profile.degree}`}</Typography>
