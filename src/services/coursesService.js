@@ -40,11 +40,13 @@ exports.edit = (
   name: string,
   university: string,
   SubjectId: string,
+  active: boolean,
+  deleted: boolean,
   semester: string,
   semesterStartDate: string,
   semesterEndDate: string,
   description: string,
-  imgUri: string
+  imgUri: string,
 ) =>
   request({
     url: `${users_api.base_url}/courses/${id}`,
@@ -52,6 +54,8 @@ exports.edit = (
       name,
       university,
       subject_id: SubjectId,
+      active: active,
+      deleted: deleted,
       semester,
       semester_start_date: semesterStartDate,
       semester_end_date: semesterEndDate,

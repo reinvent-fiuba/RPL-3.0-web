@@ -5,6 +5,12 @@ import CircularProgress from "@material-ui/core/CircularProgress";
 import Grid from "@material-ui/core/Grid";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogContentText from "@material-ui/core/DialogContentText";
+import Dialog from "@material-ui/core/Dialog";
+import DialogTitle from "@material-ui/core/DialogTitle";
+import DialogActions from "@material-ui/core/DialogActions";
+import Switch from "@material-ui/core/Switch";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
+import WarningIcon from '@material-ui/icons/Warning';
 import TextField from "@material-ui/core/TextField";
 import { withStyles } from "@material-ui/core/styles";
 import Autocomplete from "@material-ui/lab/Autocomplete";
@@ -21,26 +27,36 @@ import authenticationService from "../../services/authenticationService";
 import type { Course } from "../../types";
 
 const styles = theme => ({
+  root: {
+    maxWidth: "60%",
+    margin: "auto",
+    marginTop: theme.spacing(4),
+    [theme.breakpoints.down("md")]: {
+      maxWidth: "100%",
+      marginTop: theme.spacing(2),
+      paddingLeft: theme.spacing(2),
+      paddingRight: theme.spacing(2),
+    },
+  },
   avatar: {
     margin: theme.spacing(1),
     backgroundColor: theme.palette.background.default,
   },
   form: {
     marginTop: theme.spacing(1),
-    marginLeft: theme.spacing(40),
-    marginRight: theme.spacing(40),
-    padding: `0px ${theme.spacing(4)}px`,
+    width: "100%",
+    padding: `0px ${theme.spacing(2)}px`,
   },
   cancelButton: {
     display: "flex",
-    marginRight: theme.spacing(2),
-    marginLeft: "auto",
+    marginRight: theme.spacing(1),
+    marginLeft: 0,
     marginTop: theme.spacing(3),
   },
   createButton: {
     display: "flex",
-    marginLeft: "auto",
-    marginRight: theme.spacing(44),
+    marginLeft: 0,
+    marginRight: 0,
     marginTop: theme.spacing(3),
   },
   semesterFields: {
@@ -52,6 +68,23 @@ const styles = theme => ({
     flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
+  },
+  switchFields: {
+    marginTop: theme.spacing(2),
+    marginBottom: theme.spacing(2),
+    "& .MuiSwitch-track": {
+      backgroundColor: theme.palette.grey[500],
+    },
+  },
+  deletionSwitch: {
+    marginLeft: theme.spacing(5),
+  },
+  dropzoneContainer: {
+    marginTop: theme.spacing(2),
+    border: `1px dashed ${theme.palette.text.primary}`,
+    borderRadius: theme.spacing(1),
+    height: "180px",
+    overflow: "hidden",
   },
 });
 
@@ -77,6 +110,10 @@ type State = {
   imgUri: string,
   universities: Array<any>,
   waiting: boolean,
+  isCourseFinished: boolean,
+  courseMarkedForDeletion: boolean,
+  pendingConfirmationForFinished: boolean,
+  pendingConfirmationForDeletion: boolean,
 };
 
 class CourseForm extends React.Component<Props, State> {
@@ -95,6 +132,10 @@ class CourseForm extends React.Component<Props, State> {
     users: [],
     universities: [],
     waiting: false,
+    isCourseFinished: false,
+    courseMarkedForDeletion: false,
+    pendingConfirmationForFinished: false,
+    pendingConfirmationForDeletion: false,
   };
 
   userSearchDebounceTimer: ?TimeoutID = null;
@@ -134,6 +175,8 @@ class CourseForm extends React.Component<Props, State> {
       semesterEnd: new Date(course.semester_end_date),
       imgUri: course.img_uri,
       description: course.description,
+      isCourseFinished: !course.active || false,
+      courseMarkedForDeletion: course.deleted || false,
     });
   }
 
@@ -179,15 +222,60 @@ class CourseForm extends React.Component<Props, State> {
     });
   }
 
+  handleToggleFinish = (event, checked) => {
+    if (checked) {
+      this.setState({ pendingConfirmationForFinished: true });
+    } else {
+      this.setState({ isCourseFinished: false });
+    }
+  };
+
+  handleConfirmFinish = () => {
+    this.setState({ 
+      isCourseFinished: true, 
+      pendingConfirmationForFinished: false 
+    });
+  };
+
+  handleCancelFinish = () => {
+    this.setState({ 
+      pendingConfirmationForFinished: false, isCourseFinished: false
+    });
+  };
+
+  handleToggleDelete = (event, checked) => {
+    if (checked) {
+      this.setState({ 
+        pendingConfirmationForDeletion: true 
+      });
+    } else {
+      this.setState({ courseMarkedForDeletion: false });
+    }
+  };
+
+  handleConfirmDelete = () => {
+    this.setState({ 
+      courseMarkedForDeletion: true, 
+      pendingConfirmationForDeletion: false 
+    });
+  };
+
+  handleCancelDelete = () => {
+    this.setState({ 
+      pendingConfirmationForDeletion: false,
+      courseMarkedForDeletion: false 
+    });
+  };
+
   handleCancelClick(event) {
-  event.preventDefault();
-  const { course } = this.props;
-  if (course && course.id) {
-    this.props.history.push(`/courses/${course.id}/dashboard`);
-  } else {
-    this.props.history.push("/courses");
+    event.preventDefault();
+    const { course } = this.props;
+    if (course && course.id) {
+      this.props.history.push(`/courses/${course.id}/dashboard`);
+    } else {
+      this.props.history.push("/courses");
+    }
   }
-}
 
   handleCloneClick(event) {
     event.preventDefault();
@@ -322,6 +410,8 @@ class CourseForm extends React.Component<Props, State> {
       name,
       university,
       subjectId: subjectId,
+      isCourseFinished,
+      courseMarkedForDeletion,
       semester,
       semesterStart,
       semesterEnd,
@@ -341,6 +431,8 @@ class CourseForm extends React.Component<Props, State> {
           name,
           university.name,
           subjectId,
+          !isCourseFinished,
+          courseMarkedForDeletion,
           semester,
           semesterStart.toLocaleDateString("sv-SE"),
           semesterEnd.toLocaleDateString("sv-SE"),
@@ -423,11 +515,11 @@ class CourseForm extends React.Component<Props, State> {
     const actionTitle = {
       createMode: "Crear",
       editMode: "Guardar",
-      cloneMode: `Clonar Curso ${course?.id}`,
+      cloneMode: `Clonar Curso ${course ? `(ID: ${course.id})` : ""}`,
     };
 
     return (
-      <div>
+      <div className={classes.root}>
         {error.open && <ErrorNotification open={error.open} message={error.message} />}
         <MuiPickersUtilsProvider utils={DateFnsUtils}>
           <form noValidate className={classes.form}>
@@ -465,20 +557,20 @@ class CourseForm extends React.Component<Props, State> {
               required
               fullWidth
               id="subjectId"
-              label="Id del Curso"
+              label="Código de materia"
               name="subjectId"
               autoComplete="subjectId"
               value={this.state.subjectId}
               error={error.invalidFields.has("subjectId")}
               helperText={
                 error.invalidFields.has("subjectId") &&
-                "El Id del Curso debe estar formada por letras, numeros, guiones (_ ó -) o puntos (.)"
+                "El código de materia debe estar formado por letras, numeros, guiones (_ ó -) o puntos (.)"
               }
               onChange={e =>
                 this.handleChange(e, validate(e.target.value, /^[0-9a-zA-Z_.-]+$/, "string"))
               }
             />
-            <Grid container className={classes.semesterFields} xs={12} spacing={2}>
+            <Grid container className={classes.semesterFields} spacing={2}>
               <Grid item xs={6}>
                 <TextField
                   margin="normal"
@@ -557,6 +649,34 @@ class CourseForm extends React.Component<Props, State> {
                 )}
               />
             )}
+            {editMode && (
+              <div className={classes.switchFields}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={this.state.isCourseFinished || this.state.pendingConfirmationForFinished}
+                      onChange={this.handleToggleFinish}
+                      color="primary"
+                      name="isCourseFinished"
+                    />
+                  }
+                  label="Curso terminado"
+                />
+                <FormControlLabel
+                  control={
+                    <Switch
+                      className={classes.deletionSwitch}
+                      checked={this.state.courseMarkedForDeletion || this.state.pendingConfirmationForDeletion}
+                      onChange={this.handleToggleDelete}
+                      color="secondary"
+                      name="courseMarkedForDeletion"
+                    />
+                  }
+                  label="Marcar para eliminar"
+                />
+              </div>
+            )}
+
             <TextField
               margin="normal"
               required
@@ -572,13 +692,83 @@ class CourseForm extends React.Component<Props, State> {
               onChange={e => this.handleChange(e, true)}
               variant="outlined"
             />
-            <DropzoneArea
-              filesLimit={1}
-              acceptedFiles={["image/*"]}
-              dropzoneText="Arrastra una imagen para el curso"
-              onChange={files => this.handleAddFile(files)}
-            />
+            <div className={classes.dropzoneContainer}>
+              <DropzoneArea
+                filesLimit={1}
+                acceptedFiles={["image/*"]}
+                dropzoneText="Arrastra una imagen para el curso"
+                onChange={files => this.handleAddFile(files)}
+              />
+            </div>
+            {!waiting && (
+              <Grid container justify="flex-end" spacing={2}>
+                <Grid item>
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    className={classes.cancelButton}
+                    onClick={e => this.handleCancelClick(e)}
+                  >
+                    Cancelar
+                  </Button>
+                </Grid>
+                <Grid item>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    color="primary"
+                    className={classes.createButton}
+                    disabled={!this.canSaveCourse()}
+                    onClick={e => this.handleActionButton(e, mode)}
+                  >
+                    {actionTitle[mode]}
+                  </Button>
+                </Grid>
+              </Grid>
+            )}
           </form>
+          <Dialog
+            open={this.state.pendingConfirmationForFinished}
+            onClose={this.handleCancelFinish}
+            aria-labelledby="finish-confirm-title"
+          >
+            <DialogTitle id="finish-confirm-title">Confirmar curso terminado</DialogTitle>
+            <DialogContent>
+              <DialogContentText>
+                Al guardar con esta opción checkeada, el curso se moverá a la sección de cursos finalizados. Confirma para continuar.
+              </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={this.handleCancelFinish} color="primary">
+                Cancelar
+              </Button>
+              <Button onClick={this.handleConfirmFinish} color="primary" autoFocus>
+                Confirmar
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          <Dialog
+            open={this.state.pendingConfirmationForDeletion}
+            onClose={this.handleCancelDelete}
+            aria-labelledby="delete-confirm-title"
+          >
+            <DialogTitle id="delete-confirm-title">CONFIRMAR ELIMINACIÓN</DialogTitle>
+            <DialogContent>
+              <DialogContentText>
+                ADVERTENCIA: Si guardas con esta opción checkeada, el curso se marcará para eliminación y será borrado en un futuro mantenimiento del sistema. Una vez eliminado, el curso NO podrá ser recuperado. ¿Confirmas que querés marcar este curso para eliminación?
+              </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={this.handleCancelDelete} color="primary">
+                Cancelar
+              </Button>
+              <Button onClick={this.handleConfirmDelete} color="secondary" startIcon={<WarningIcon />} autoFocus>
+                Confirmar
+              </Button>
+            </DialogActions>
+          </Dialog>
+          
           {waiting && (
             <DialogContent dividers className={classes.waitingDialog}>
               <DialogContentText id="scroll-dialog-description" tabIndex={-1}>
@@ -586,32 +776,6 @@ class CourseForm extends React.Component<Props, State> {
               </DialogContentText>
               <CircularProgress />
             </DialogContent>
-          )}
-          {!waiting && (
-            <Grid container>
-              <Grid item xs>
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  className={classes.cancelButton}
-                  onClick={e => this.handleCancelClick(e)}
-                >
-                  Cancelar
-                </Button>
-              </Grid>
-              <Grid item>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  color="primary"
-                  className={classes.createButton}
-                  disabled={!this.canSaveCourse()}
-                  onClick={e => this.handleActionButton(e, mode)}
-                >
-                  {actionTitle[mode]}
-                </Button>
-              </Grid>
-            </Grid>
           )}
         </MuiPickersUtilsProvider>
       </div>
