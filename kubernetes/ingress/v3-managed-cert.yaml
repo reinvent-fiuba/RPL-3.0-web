@@ -4,5 +4,5 @@ metadata:
   name: v3-managed-cert
 spec:
   domains:
-    - myrpl.ar
-    - www.myrpl.ar
+    - myrpl.net.ar
+    - www.myrpl.net.ar
