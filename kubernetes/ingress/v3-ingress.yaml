@@ -4,7 +4,7 @@ metadata:
   name: v3-ingress
   annotations:
     # OJO que si se deploya multiples veces se van a crear constantemente nuevas IPs
-    networking.gke.io/managed-certificates: v3-managed-cert
+    networking.gke.io/managed-certificates: "v3-managed-cert,v3-managed-cert-aux-ar"
     # Notar que el encriptado SSL (HTTPS) va hasta el LoadBalancer manejado por google. Osea que el trafico que le llega al nginx ya es HTTP
     kubernetes.io/ingress.class: "gce"
 spec:

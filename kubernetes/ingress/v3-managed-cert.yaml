@@ -6,3 +6,12 @@ spec:
   domains:
     - myrpl.net.ar
     - www.myrpl.net.ar
+---
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: v3-managed-cert-aux-ar
+spec:
+  domains:
+    - myrpl.ar
+    - www.myrpl.ar
